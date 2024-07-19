@@ -1,73 +1,49 @@
-const fs = require('node:fs')
-const http = require('node:http')
-const url = require('node:url')
+const express = require("express");
+const path = require("path");
+const socketIO = require("socket.io");
+const { createServer } = require("http");
+const connectDB = require("./models/db");
 
-// set up web server
-const server = http.createServer(listener)
+const app = express();
+app.use(express.json());
+app.use("/api/auth", require("./routes/user"));
+app.use("/", express.static(path.join(__dirname, "static")));
+const fs = require("fs");
 
-// last known count
-let count = 0
+const httpServer = createServer(app);
+let port = process.env.PORT || 3000;
 
-// Map of file extensions to mime types
-const mimeTypes = {
-  ico: 'image/x-icon',
-  js: 'text/javascript',
-  css: 'text/css',
-  svg: 'image/svg+xml'
-}
+const io = socketIO(httpServer);
 
-// Process requests based on pathname
-async function listener(request, response) {
-  const { pathname } = url.parse(request.url)
+httpServer.listen(port);
+console.log(`Server started on port ${port}`);
 
-  if (pathname === '/') {
-    await main(request, response)
-  } else if (fs.existsSync(`public${pathname}`)) {
-    try {
-      const contents = fs.readFileSync(`public${pathname}`, 'utf-8')
-      const mimeType = mimeTypes[pathname.split('.').pop()] || 'application/octet-stream'
+// Handling Error
+process.on("unhandledRejection", (err) => {
+  console.log(`An error occurred: ${err.message}`);
+  httpServer.close(() => process.exit(1));
+});
 
-      response.writeHead(200, { 'Content-Type': mimeType })
-      response.write(contents, 'utf-8')
-    } catch (error) {
-      response.writeHead(500, { 'Content-Type': 'text/plain' })
-      response.write(error + '\n')
-    }
+// app.get('/profilePicture/:filename', (req, res) => {
+//   const filename = req.params.filename;
+//   const filePath = path.join(__dirname, 'uploads', filename);
 
-    response.end()
-  } else {
-    response.writeHead(404)
-    response.end('Not found.')
-  }
-}
+//   fs.access(filePath, fs.constants.F_OK, err => {
+//     if (err) {
+//       return res.status(404).send('File not found');
+//     }
+//     res.sendFile(filePath);
+//   });
+// });
 
-// Main page
-async function main(_request, response) {
-  // increment counter in counter.txt file
-  try {
-    count = parseInt(fs.readFileSync('counter.txt', 'utf-8')) + 1
-  } catch {
-    count = 1
-  }
+// Endpoint to get profile pictures
+app.get("/profilePicture/:filename", (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, "uploads", filename);
 
-  fs.writeFileSync('counter.txt', count.toString())
+  res.sendFile(filePath);
+});
 
-  // render HTML response
-  try {
-    let contents = fs.readFileSync('views/index.tmpl', 'utf-8')
-    contents = contents.replace('@@COUNT@@', count.toString())
-
-    response.writeHead(200, { 'Content-Type': 'text/html' })
-    response.write(contents, 'utf-8')
-  } catch (error) {
-    response.writeHead(500, { 'Content-Type': 'text/plain' })
-    response.write(error + '\n')
-  }
-
-  response.end()
-}
-
-// Start web server on port 3000
-server.listen(3000, () => {
-  console.log('Server is listening on port 3000')
-})
+require("./Socket/socketEvent")(io);
+require("./Socket/socketFunction").init(io);
+connectDB();
