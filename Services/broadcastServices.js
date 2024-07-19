@@ -60,7 +60,7 @@ async function addBroadcast(socket_id, sdp, username, profilePicture, title) {
 async function broadcastMediaProcess(id) {
   try {
     broadcasters[id].peer.ontrack = (e) => {
-      console.log(`Track received for broadcaster ${id}`);
+      console.log(`Track received for broadcaster ${id}:`, e.streams[0]);
       broadcasters[id].stream = e.streams[0];
     };
   } catch (e) {

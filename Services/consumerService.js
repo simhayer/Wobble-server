@@ -45,11 +45,10 @@ async function sdpProcess(id, broadcast_id, sdp) {
     var desc = new webrtc.RTCSessionDescription(sdp);
     await consumers[id].peer.setRemoteDescription(desc);
 
-    broadcasters[broadcast_id].stream
-      .getTracks()
-      .forEach((track) =>
-        consumers[id].peer.addTrack(track, broadcasters[broadcast_id].stream)
-      );
+    broadcasters[broadcast_id].stream.getTracks().forEach((track) => {
+      console.log(`Adding track to consumer ${id}:`, track);
+      consumers[id].peer.addTrack(track, broadcasters[broadcast_id].stream);
+    });
 
     const answer = await consumers[id].peer.createAnswer({
       offerToReceiveVideo: 1,
