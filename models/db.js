@@ -5,7 +5,7 @@ const AppData = require("./AppData"); // Ensure the path is correct
 //const localDB = `mongodb://0.0.0.0:27017/role_auth`;
 
 const localDB =
-  "mongodb+srv://hayersimrat23:Messi999@cluster0.ad77vid.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+  "mongodb+srv://hayersimrat23:Messi999@cluster0.bqjnfql.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 const initializeAppData = async () => {
   try {
